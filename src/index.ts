@@ -56,6 +56,8 @@ declare interface OverlayWindow {
 
 class OverlayWindow extends EventEmitter {
   private _overlayWindow!: BrowserWindow
+  private _targetWindowTitle?: string;
+  private initialized : boolean= false;
   public defaultBehavior = true
   private lastBounds: Rectangle = { x: 0, y: 0, width: 0, height: 0 }
   private hidden = true;
@@ -172,7 +174,14 @@ class OverlayWindow extends EventEmitter {
   }
 
   show() {
+    if(!this._targetWindowTitle || !this._overlayWindow)
+    return;
+
     this.hidden = false;
+  
+    if (!this.initialized) {
+      lib.start(this._overlayWindow.getNativeWindowHandle(), this._targetWindowTitle, this.handler.bind(this))
+    }
     if (this.active) {
       this._overlayWindow?.showInactive();
       this.activateOverlay();
@@ -184,7 +193,7 @@ class OverlayWindow extends EventEmitter {
       throw new Error('Library can be initialized only once.')
     }
     this._overlayWindow = overlayWindow
-    lib.start(overlayWindow.getNativeWindowHandle(), targetWindowTitle, this.handler.bind(this))
+    this._targetWindowTitle = targetWindowTitle;
   }
 }
 
