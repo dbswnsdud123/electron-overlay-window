@@ -58,6 +58,8 @@ class OverlayWindow extends EventEmitter {
   private _overlayWindow!: BrowserWindow
   public defaultBehavior = true
   private lastBounds: Rectangle = { x: 0, y: 0, width: 0, height: 0 }
+  private hidden = true;
+  private active = false;
 
   readonly WINDOW_OPTS = {
     fullscreenable: true,
@@ -68,14 +70,17 @@ class OverlayWindow extends EventEmitter {
     // let Chromium to accept any size changes from OS
     resizable: true
   } as const
-  
-  constructor () {
+
+  constructor() {
     super()
 
     this.on('attach', (e) => {
       if (this.defaultBehavior) {
         // linux: important to show window first before changing fullscreen
-        this._overlayWindow.showInactive()
+        this.active = true;
+        if (!this.hidden) {
+          this._overlayWindow.showInactive();
+        }
         if (e.isFullscreen !== undefined) {
           this._overlayWindow.setFullScreen(e.isFullscreen)
         }
@@ -92,7 +97,10 @@ class OverlayWindow extends EventEmitter {
 
     this.on('detach', () => {
       if (this.defaultBehavior) {
-        this._overlayWindow.hide()
+        if (!this.hidden) {
+          this._overlayWindow.hide()
+          this.active = false;
+        }
       }
     })
 
@@ -104,7 +112,7 @@ class OverlayWindow extends EventEmitter {
     })
   }
 
-  private updateOverlayBounds () {
+  private updateOverlayBounds() {
     let lastBounds = this.lastBounds
     if (lastBounds.width != 0 && lastBounds.height != 0) {
       if (process.platform === 'win32') {
@@ -120,7 +128,7 @@ class OverlayWindow extends EventEmitter {
     }
   }
 
-  private handler (e: unknown) {
+  private handler(e: unknown) {
     switch ((e as { type: EventType }).type) {
       case EventType.EVENT_ATTACH:
         this.emit('attach', e)
@@ -158,7 +166,20 @@ class OverlayWindow extends EventEmitter {
     lib.focusTarget()
   }
 
-  attachTo (overlayWindow: BrowserWindow, targetWindowTitle: string) {
+  hide() {
+    this.hidden = true;
+    this._overlayWindow?.hide();
+  }
+
+  show() {
+    this.hidden = false;
+    if (this.active) {
+      this._overlayWindow?.showInactive();
+      this.activateOverlay();
+    }
+  }
+
+  attachTo(overlayWindow: BrowserWindow, targetWindowTitle: string) {
     if (this._overlayWindow) {
       throw new Error('Library can be initialized only once.')
     }
