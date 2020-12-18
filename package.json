@@ -20,7 +20,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "install": "node-gyp-build",
+    "install": "node-gyp-build && yarn build-ts",
     "prebuild": "prebuildify --napi",
     "build-ts": "tsc",
     "demo:electron": "node-gyp build && yarn build-ts && electron dist/demo/electron-demo.js"
@@ -42,7 +42,9 @@
   },
   "dependencies": {
     "node-gyp-build": "4.x.x",
-    "throttle-debounce": "2.x.x"
+    "throttle-debounce": "2.x.x",
+    "ts-node": "9.x.x",
+    "typescript": "4.x.x"
   },
   "gypfile": true,
   "engines": {
