@@ -210,8 +210,9 @@ static void check_and_handle_window(HWND hwnd, struct ow_target_window* target_i
     LONG ex_style = GetWindowLong(overlay_info.hwnd, GWL_EXSTYLE);
     SetWindowLong(overlay_info.hwnd, GWL_EXSTYLE, ex_style & ~WS_EX_LAYERED);
     SetWindowLong(overlay_info.hwnd, GWL_EXSTYLE, ex_style);
-
     SetWindowLong(overlay_info.hwnd, GWL_STYLE, style);
+    SetWindowLong(overlay_info.hwnd, GWL_EXSTYLE,  WS_EX_TRANSPARENT | WS_EX_LAYERED);
+
   }
 
   struct ow_event e = {

@@ -78,6 +78,7 @@ class OverlayWindow extends EventEmitter {
 
     this.on('attach', (e) => {
       if (this.defaultBehavior) {
+        this._overlayWindow?.setIgnoreMouseEvents(true);
         // linux: important to show window first before changing fullscreen
         this.active = true;
         if (!this.hidden) {
@@ -115,6 +116,7 @@ class OverlayWindow extends EventEmitter {
   }
 
   private updateOverlayBounds() {
+   // this._overlayWindow.setIgnoreMouseEvents(true);
     let lastBounds = this.lastBounds
     if (lastBounds.width != 0 && lastBounds.height != 0) {
       if (process.platform === 'win32') {
