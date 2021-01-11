@@ -208,7 +208,7 @@ class OverlayWindow extends EventEmitter {
       );
     }
     if (this.active) {
-      this._overlayWindow?.showInactive();
+    //  this._overlayWindow?.showInactive();
       this.activateOverlay();
     }
   }
