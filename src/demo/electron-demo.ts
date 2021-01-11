@@ -1,16 +1,17 @@
-import { app, BrowserWindow } from 'electron'
-import { overlayWindow } from '../'
+import { app, BrowserWindow } from "electron";
+import { overlayWindow } from "../";
 
-let window: BrowserWindow
+let window: BrowserWindow;
+let gwindow: BrowserWindow;
 
-function createWindow () {
-  window = new BrowserWindow({
+function createWindow(ddd: boolean) {
+  const _window = new BrowserWindow({
     width: 400,
     height: 300,
-    ...overlayWindow.WINDOW_OPTS
-  })
+    ...overlayWindow.WINDOW_OPTS,
+  });
 
-  window.loadURL(`data:text/html;charset=utf-8,
+  _window.loadURL(`data:text/html;charset=utf-8,
     <head>
       <title>overlay-demo</title>
     </head>
@@ -20,17 +21,30 @@ function createWindow () {
         <span style="padding: 16px; border-radius: 8px; background: rgb(255,255,255); border: 4px solid red;">Overlay Window</span>
       </div>
     </body>
-  `)
+  `);
 
-  window.setIgnoreMouseEvents(true)
-
-  overlayWindow.attachTo(window, 'Untitled - Notepad');
-  overlayWindow.show();
+  if (ddd) {
+    _window.setIgnoreMouseEvents(true);
+    _window.on("close", () => {});
+    overlayWindow.attachTo(_window, "Untitled - Notepad");
+    overlayWindow.show();
+  }
+  return _window;
 }
 
-app.on('ready', () => {
-  setTimeout(
-    createWindow,
-    process.platform === 'linux' ? 1000 : 0
-  )
-})
+function restart() {
+  // overlayWindow.hide();
+  overlayWindow.stop();
+  window?.close();
+  setTimeout(() => { window = createWindow(true) }, 1000);
+   setTimeout(restart, 20000);
+}
+
+app.on("ready", () => {
+  setTimeout(() =>  { gwindow = createWindow(false) }, 0);
+  setTimeout(() =>  { window = createWindow(true) }, 0);
+
+  setTimeout(restart, 2000);
+});
+
+process.stdin.resume();
