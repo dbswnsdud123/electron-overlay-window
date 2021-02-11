@@ -257,7 +257,10 @@ static void hook_proc(xcb_generic_event_t* generic_event) {
   }
 }
 
+static bool stopped = false;
+
 static void hook_thread(void* _arg) {
+  stopped = false;
   x_conn = xcb_connect(NULL, NULL);
   xcb_screen_t* screen = xcb_setup_roots_iterator(xcb_get_setup(x_conn)).data;
   root = screen->root;
@@ -293,12 +296,21 @@ static void hook_thread(void* _arg) {
   xcb_flush(x_conn);
 
   xcb_generic_event_t* event;
-  while ((event = xcb_wait_for_event(x_conn))) {
+  while ((event = xcb_wait_for_event(x_conn)) && !stopped) {
     event->response_type = event->response_type & ~0x80;
     hook_proc(event);
     xcb_flush(x_conn);
     free(event);
   }
+}
+
+void ow_stop() {
+  if (target_info.window_id != XCB_WINDOW_NONE) {
+    uint32_t mask[] = { XCB_EVENT_MASK_NO_EVENT };
+    xcb_change_window_attributes(x_conn, target_info.window_id, XCB_CW_EVENT_MASK, mask);
+    target_info.window_id = XCB_WINDOW_NONE;
+  }
+  stopped = true;
 }
 
 void ow_start_hook(char* target_window_title, void* overlay_window_id) {
