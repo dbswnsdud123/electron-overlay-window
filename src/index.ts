@@ -130,7 +130,7 @@ class OverlayWindow extends EventEmitter {
           this.lastBounds
         );
       }
-      this._overlayWindow!.setBounds(lastBounds);
+      //this._overlayWindow!.setBounds(lastBounds);
       if (process.platform === "win32") {
         // if moved to screen with different DPI, 2nd call to setBounds will correctly resize window
         // dipRect must be recalculated as well
@@ -138,7 +138,7 @@ class OverlayWindow extends EventEmitter {
           this._overlayWindow!,
           this.lastBounds
         );
-        this._overlayWindow!.setBounds(lastBounds);
+        //this._overlayWindow!.setBounds(lastBounds);
       }
     }
   }
