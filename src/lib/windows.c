@@ -11,6 +11,7 @@
 struct ow_target_window
 {
   char *title;
+  wchar_t wtitle[256];
   HWND hwnd;
   HWINEVENTHOOK location_hook;
   HWINEVENTHOOK destroy_hook;
@@ -349,7 +350,6 @@ static VOID CALLBACK hook_proc(
 
 static VOID CALLBACK foreground_timer_proc(HWND _hwnd, UINT msg, UINT_PTR timerId, DWORD dwmsEventTime)
 {
-
   HWND system_foreground = GetForegroundWindow();
 
   if (
@@ -358,6 +358,15 @@ static VOID CALLBACK foreground_timer_proc(HWND _hwnd, UINT msg, UINT_PTR timerI
   {
     // printf("WM_TIMER: Foreground changed\n");
     handle_new_foreground(system_foreground);
+  }
+
+  if(target_info.hwnd == NULL)
+  {
+    HWND target = FindWindowW(NULL, target_info.wtitle);
+    if (target != NULL)
+    {
+      handle_new_foreground(target);
+    }
   }
 }
 static bool stopped = false;
@@ -415,6 +424,8 @@ void ow_stop()
 void ow_start_hook(char *target_window_title, void *overlay_window_id)
 {
   target_info.title = target_window_title;
+  mbstowcs(target_info.wtitle, target_info.title, strlen(target_info.title)+1);
+
   overlay_info.hwnd = *((HWND *)overlay_window_id);
   uv_thread_create(&hook_tid, hook_thread, NULL);
 }
@@ -426,5 +437,16 @@ void ow_activate_overlay()
 
 void ow_focus_target()
 {
-  SetForegroundWindow(target_info.hwnd);
+  if (target_info.hwnd != NULL)
+  {
+    SetForegroundWindow(target_info.hwnd);
+  }
+  else
+  {
+    HWND target = FindWindowW(NULL, target_info.wtitle);
+    if (target)
+    {
+      SetForegroundWindow(target);
+    }
+  }
 }
