@@ -17,6 +17,7 @@ struct ow_target_window
   HWINEVENTHOOK destroy_hook;
   bool is_focused;
   bool is_destroyed;
+  bool setChild;
 };
 
 struct ow_overlay_window
@@ -33,7 +34,8 @@ static struct ow_target_window target_info = {
     .location_hook = NULL,
     .destroy_hook = NULL,
     .is_focused = false,
-    .is_destroyed = false};
+    .is_destroyed = false,
+    .setChild = false};
 
 static struct ow_overlay_window overlay_info = {
     .hwnd = NULL};
@@ -215,27 +217,31 @@ static void check_and_handle_window(HWND hwnd, struct ow_target_window *target_i
 
   // https://github.com/electron/electron/blob/8de06f0c571bc24e4230063e3ef0428390df773e/shell/browser/native_window_views.cc#L1065
   SetLastError(0);
-  SetWindowLongPtrW(overlay_info.hwnd, GWLP_HWNDPARENT, (LONG_PTR)target_info->hwnd);
-  // bool failed_to_set_parent = (GetLastError() == ERROR_INVALID_PARAMETER); // elevated target window
-  bool failed_to_set_parent = (GetLastError() != 0);
-
-  // undo implicit message queue attachment
-  AttachThreadInput(threadId, GetWindowThreadProcessId(overlay_info.hwnd, NULL), FALSE);
-
-  // fix: window is placed behind target
-  SetWindowPos(overlay_info.hwnd, target_info->hwnd, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
-  SetWindowPos(target_info->hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
-
-  // fix: lost transparency on very first appearance
+  bool failed_to_set_parent = false;
+  if (target_info->setChild)
   {
-    LONG style = GetWindowLong(overlay_info.hwnd, GWL_STYLE);
-    SetWindowLong(overlay_info.hwnd, GWL_STYLE, style | WS_VISIBLE);
+    SetWindowLongPtrW(overlay_info.hwnd, GWLP_HWNDPARENT, (LONG_PTR)target_info->hwnd);
+    // bool failed_to_set_parent = (GetLastError() == ERROR_INVALID_PARAMETER); // elevated target window
+    failed_to_set_parent = (GetLastError() != 0);
 
-    LONG ex_style = GetWindowLong(overlay_info.hwnd, GWL_EXSTYLE);
-    SetWindowLong(overlay_info.hwnd, GWL_EXSTYLE, ex_style & ~WS_EX_LAYERED);
-    SetWindowLong(overlay_info.hwnd, GWL_EXSTYLE, ex_style);
-    SetWindowLong(overlay_info.hwnd, GWL_STYLE, style);
-    SetWindowLong(overlay_info.hwnd, GWL_EXSTYLE, WS_EX_TRANSPARENT | WS_EX_LAYERED);
+    // undo implicit message queue attachment
+    AttachThreadInput(threadId, GetWindowThreadProcessId(overlay_info.hwnd, NULL), FALSE);
+
+    // fix: window is placed behind target
+    SetWindowPos(overlay_info.hwnd, target_info->hwnd, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+    SetWindowPos(target_info->hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+
+    // fix: lost transparency on very first appearance
+    {
+      LONG style = GetWindowLong(overlay_info.hwnd, GWL_STYLE);
+      SetWindowLong(overlay_info.hwnd, GWL_STYLE, style | WS_VISIBLE);
+
+      LONG ex_style = GetWindowLong(overlay_info.hwnd, GWL_EXSTYLE);
+      SetWindowLong(overlay_info.hwnd, GWL_EXSTYLE, ex_style & ~WS_EX_LAYERED);
+      SetWindowLong(overlay_info.hwnd, GWL_EXSTYLE, ex_style);
+      SetWindowLong(overlay_info.hwnd, GWL_STYLE, style);
+      SetWindowLong(overlay_info.hwnd, GWL_EXSTYLE, WS_EX_TRANSPARENT | WS_EX_LAYERED);
+    }
   }
 
   struct ow_event e = {
