@@ -131,15 +131,6 @@ class OverlayWindow extends EventEmitter {
         );
       }
       //this._overlayWindow!.setBounds(lastBounds);
-      if (process.platform === "win32") {
-        // if moved to screen with different DPI, 2nd call to setBounds will correctly resize window
-        // dipRect must be recalculated as well
-        lastBounds = screen.screenToDipRect(
-          this._overlayWindow!,
-          this.lastBounds
-        );
-        //this._overlayWindow!.setBounds(lastBounds);
-      }
     }
   }
 
@@ -163,6 +154,14 @@ class OverlayWindow extends EventEmitter {
       case EventType.EVENT_MOVERESIZE:
         this.emit("moveresize", e);
         break;
+    }
+  }
+
+  targetPosition() {
+    try {
+      return screen.screenToDipRect(this._overlayWindow!, this.lastBounds);
+    } catch (error) {
+      return { x: 0, y: 0, width: 0, height: 0 };
     }
   }
 
@@ -199,7 +198,7 @@ class OverlayWindow extends EventEmitter {
     this.hidden = false;
 
     if (!this.initialized) {
-      console.log('showing window..');
+      console.log("showing window..");
       this.initialized = true;
       lib.start(
         this._overlayWindow.getNativeWindowHandle(),
@@ -208,7 +207,7 @@ class OverlayWindow extends EventEmitter {
       );
     }
     if (this.active) {
-    //  this._overlayWindow?.showInactive();
+      //  this._overlayWindow?.showInactive();
       this.activateOverlay();
     }
   }
