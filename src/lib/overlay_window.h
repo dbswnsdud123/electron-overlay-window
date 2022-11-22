@@ -4,6 +4,10 @@
 #include <stdint.h>
 #include <uv.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum ow_event_type {
   // target window is found
   OW_ATTACH = 1,
@@ -64,5 +68,9 @@ void ow_activate_overlay();
 void ow_focus_target();
 
 void ow_emit_event(struct ow_event* event);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
